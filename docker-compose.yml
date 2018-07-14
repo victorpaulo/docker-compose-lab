@@ -1,0 +1,55 @@
+version: '3'
+services:
+  db2:
+    image: ibmcom/db2express-c
+    entrypoint: /entrypoint.sh db2start
+    ports:
+     - "50000:50000"
+    environment:
+     - LICENSE=accept
+     - DB2INST1_PASSWORD=db2inst1-pwd
+    volumes:
+     - ./db2:/share
+  mq:
+    image: ibmcom/mq
+    ports:
+     - "1414:1414"
+     - "9443:9443"
+    environment:
+     - LICENSE=accept 
+     - MQ_QMGR_NAME=QM2 
+  ace:
+    image: ibmcom/ace:11.0.0.0
+    ports:
+     - "7600:7600"
+    environment:
+     - LICENSE=accept
+    volumes:
+     - .:/ace
+  datapower:
+    image: "ibmcom/datapower"
+    depends_on:
+       - db2
+       - mq
+       - ace
+    ports:
+     - "9090:9090" 
+     - "8080:8080" 
+     - "8081:8081" 
+     - "8082:8082" 
+     - "8083:8083" 
+     - "8084:8084"
+     - "5550:5550"
+     - "5020:5020"
+     - "5001:5001"
+     - "5060:5060"
+     - "5061:5061"
+    environment:
+     - DATAPOWER_ACCEPT_LICENSE=true 
+     - DATAPOWER_INTERACTIVE=true 
+     - DATAPOWER_WORKER_THREADS=4 
+    command: /bin/drouter "configure; web-mgmt 0 9090;"
+    volumes:
+     - ./config:/drouter/config 
+     - ./local:/drouter/local
+  
